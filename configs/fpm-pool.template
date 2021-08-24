@@ -2,7 +2,7 @@
 user = _user
 group = _user
 
-listen = /run/php-fpm-_domain.sock
+listen = /var/run/php-fpm-_domain.sock
 listen.allowed_clients = 127.0.0.1
 listen.owner = _user
 listen.group = _group

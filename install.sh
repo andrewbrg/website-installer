@@ -55,10 +55,10 @@ processNginx() {
   notify "Installing config file...";
   if [ -f "${NGINX_CONF_FILE}" ]; then
     while true; do
-      read -p "A config file already exits for ${DOMAIN}, overwrite?" yn
+      read -p "A config file already exits for ${DOMAIN}, overwrite (y/n)?" yn
         case $yn in
             [Yy]* ) setupNginxConf; break;;
-            [Nn]* ) ;;
+            [Nn]* ) break;;
             * ) echo "Please answer yes or no.";;
         esac
     done
@@ -69,10 +69,10 @@ processNginx() {
   notify "Installing certificates...";
   if [ -f "${SSL_CERT_DIR}/selfsigned.key" ] && [ -f "${SSL_CERT_DIR}/selfsigned.crt" ]; then
     while true; do
-      read -p "SSL certificates already exist for ${DOMAIN}, overwrite?" yn
+      read -p "SSL certificates already exist for ${DOMAIN}, overwrite (y/n)?" yn
         case $yn in
             [Yy]* ) setupNginxCerts; break;;
-            [Nn]* ) ;;
+            [Nn]* ) break;;
             * ) echo "Please answer yes or no.";;
         esac
     done
@@ -120,10 +120,10 @@ processFpmPool() {
   notify "Installing config file...";
   if [ -f "${FPM_POOL_FILE}" ]; then
     while true; do
-      read -p "FPM pool already exist for ${DOMAIN}, overwrite?" yn
+      read -p "FPM pool already exist for ${DOMAIN}, overwrite (y/n)?" yn
         case $yn in
             [Yy]* ) setupFpmPool; break;;
-            [Nn]* ) ;;
+            [Nn]* ) break;;
             * ) echo "Please answer yes or no.";;
         esac
     done
