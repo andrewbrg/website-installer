@@ -1,5 +1,8 @@
 #!/bin/bash
 
+VERSION_PHP="7.4";
+USER_NGINX="www-data";
+
 title() {
   printf "\033[1;30;42m";
   printf '%*s\n'  "${COLUMNS:-$(tput cols)}" '' || tr ' ' ' ';
@@ -29,23 +32,22 @@ breakLine() {
 }
 
 processUser() {
-  title "Processing User ${NEW_USER}";
+  title "Processing User ${USER_NEW}";
    
-  if id "${NEW_USER}" &>/dev/null; then
-    notify "User ${NEW_USER} already exists, skipping..."
+  if id "${USER_NEW}" &>/dev/null; then
+    notify "User ${USER_NEW} already exists, skipping..."
   else
-    useradd -m -p"${NEW_USER_PW}" ${NEW_USER};
-    usermod -a -G ${NEW_USER} ${NEW_USER};
+    useradd -m -p"${USER_NEW_PW}" ${USER_NEW};
+    usermod -a -G ${USER_NEW} ${USER_NEW};
     
-    mkdir -p "/home/${NEW_USER}/public_html";
-    chown -R ${NEW_USER}:nginx "/home/${NEW_USER}";
+    mkdir -p "/home/${USER_NEW}/public_html";
+    chown -R ${USER_NEW}:nginx "/home/${USER_NEW}";
   
-    notify "User ${NEW_USER} created...";
+    notify "User ${USER_NEW} created...";
   fi
   
   breakLine;
 }
-
 
 processNginx() {
   title "Processing Nginx";
@@ -84,12 +86,13 @@ processNginx() {
 setupNginxConf() {
   cp "configs/nginx-conf.template" "${NGINX_CONF_FILE}";
   sed -i -e "s/_domain/${DOMAIN}/g" "${NGINX_CONF_FILE}";
-  sed -i -e "s/_user/${NEW_USER}/g" "${NGINX_CONF_FILE}";
+  sed -i -e "s/_user/${USER_NEW}/g" "${NGINX_CONF_FILE}";
+  sed -i -e "s/_group/${USER_NGINX}/g" "${NGINX_CONF_FILE}";
 
   touch "/var/log/nginx/${DOMAIN}.access.log";
   touch "/var/log/nginx/${DOMAIN}.error.log";
-  chown nginx "/var/log/nginx/${DOMAIN}.access.log";
-  chown nginx "/var/log/nginx/${DOMAIN}.error.log";
+  chown ${USER_NGINX} "/var/log/nginx/${DOMAIN}.access.log";
+  chown ${USER_NGINX} "/var/log/nginx/${DOMAIN}.error.log";
 
   local CF_DIR="/etc/nginx/conf.d/inc";
   
@@ -132,17 +135,19 @@ processFpmPool() {
 setupFpmPool() {
   cp "configs/fpm-pool.template" "${FPM_POOL_FILE}";
   sed -i -e "s/_domain/${DOMAIN}/g" "${FPM_POOL_FILE}";
-  sed -i -e "s/_user/${NEW_USER}/g" "${FPM_POOL_FILE}";
+  sed -i -e "s/_user/${USER_NEW}/g" "${FPM_POOL_FILE}";
+  sed -i -e "s/_version/${VERSION_PHP}/g" "${FPM_POOL_FILE}";
 
-  touch "/var/log/php-fpm/${DOMAIN}-slow.log";
-  touch "/var/log/php-fpm/${DOMAIN}-error.log";
-  chown ${NEW_USER} "/var/log/php-fpm/${DOMAIN}-slow.log";
-  chown ${NEW_USER} "/var/log/php-fpm/${DOMAIN}-error.log";
+  mkdir -p "/var/log/php${VERSION_PHP}-fpm";
+  touch "/var/log/php${VERSION_PHP}-fpm/${DOMAIN}-slow.log";
+  touch "/var/log/php${VERSION_PHP}-fpm/${DOMAIN}-error.log";
+  chown ${USER_NEW} "/var/log/php${VERSION_PHP}-fpm/${DOMAIN}-slow.log";
+  chown ${USER_NEW} "/var/log/php${VERSION_PHP}-fpm/${DOMAIN}-error.log";
 
   mkdir -p "/var/lib/php/session/${DOMAIN}";
   mkdir -p "/var/lib/php/wsdlcache/${DOMAIN}";
-  chown -R ${NEW_USER} "/var/lib/php/session/${DOMAIN}";
-  chown -R ${NEW_USER} "/var/lib/php/wsdlcache/${DOMAIN}";
+  chown -R ${USER_NEW} "/var/lib/php/session/${DOMAIN}";
+  chown -R ${USER_NEW} "/var/lib/php/wsdlcache/${DOMAIN}";
 
   notify "New PHP-FPM pool created at: ${FPM_POOL_FILE}";
   breakLine;
@@ -184,8 +189,8 @@ restartServices() {
 }
 
 setPermissions() {
-  find "/home/${NEW_USER}/public_html" -type d -exec chmod 755 {} \;
-  find "/home/${NEW_USER}/public_html" -type f -exec chmod 644 {} \;
+  find "/home/${USER_NEW}/public_html" -type d -exec chmod 755 {} \;
+  find "/home/${USER_NEW}/public_html" -type f -exec chmod 644 {} \;
 }
 
 ## Checks
@@ -220,11 +225,11 @@ fi
 ## Installation
 ##############################################
 DOMAIN=$1;
-NEW_USER=${DOMAIN//./};
-NEW_USER_PW=$2;
+USER_NEW=${DOMAIN//./};
+USER_NEW_PW=$2;
 SSL_CERT_DIR="/etc/nginx/ssl/${DOMAIN}";
 NGINX_CONF_FILE="/etc/nginx/conf.d/${DOMAIN}.conf";
-FPM_POOL_FILE="/etc/php-fpm.d/${DOMAIN}.conf";
+FPM_POOL_FILE="/etc/php/${VERSION_PHP}/fpm/pool.d/${DOMAIN}.conf";
 
 processUser;
 processNginx;
@@ -237,10 +242,10 @@ restartServices;
 
 notify "Installation summary:";
 if [ ${IS_SUCCESS} -eq 1 ]; then
-  echo -e "- New user \033[1;4m${NEW_USER}\033[0m available with a home directory at \033[1;4m/home/${NEW_USER}\033[0m.";
+  echo -e "- New user \033[1;4m${USER_NEW}\033[0m available with a home directory at \033[1;4m/home/${USER_NEW}\033[0m.";
   echo -e "- Nginx config for \033[1;4m${DOMAIN}\033[0m and www.\033[1;4m${DOMAIN}\033[0m on HTTP/S created at \
   \033[1;4m${NGINX_CONF_FILE}\033[0m with SSL certificates located at \033[1;4m${SSL_CERT_DIR}\033[0m.";
-  echo -e "- PHP-FPM pool running under user \033[1;4m${NEW_USER}\033[0m with config located at \033[1;4m${FPM_POOL_FILE}\033[0m.";
+  echo -e "- PHP-FPM pool running under user \033[1;4m${USER_NEW}\033[0m with config located at \033[1;4m${FPM_POOL_FILE}\033[0m.";
   
   notify "Please ensure the following SeLinux setup has been applied:";
   echo 'semanage permissive -a httpd_t;';
