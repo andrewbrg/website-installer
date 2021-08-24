@@ -51,7 +51,7 @@ processNginx() {
   title "Processing Nginx";
   
   notify "Installing config file...";
-  if [ -f ${NGINX_CONF_FILE} ]; then
+  if [ -f "${NGINX_CONF_FILE}" ]; then
     while true; do
       read -p "A config file already exits for ${DOMAIN}, overwrite?" yn
         case $yn in
@@ -93,7 +93,7 @@ setupNginxConf() {
 
   local CF_DIR="/etc/nginx/conf.d/inc";
   
-  if [ ! -f ${CF_DIR} ]; then
+  if [ ! -f "${CF_DIR}" ]; then
     mkdir -p ${CF_DIR};
     cp "configs/cf-conf.template" "${CF_DIR}/cloudflare.conf";
   fi
