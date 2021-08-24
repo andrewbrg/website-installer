@@ -82,7 +82,7 @@ processNginx() {
 }
 
 setupNginxConf() {
-  cp "nginx.conf.template" "${NGINX_CONF_FILE}";
+  cp "configs/nginx-conf.template" "${NGINX_CONF_FILE}";
   sed -i -e "s/_domain/${DOMAIN}/g" "${NGINX_CONF_FILE}";
   sed -i -e "s/_user/${NEW_USER}/g" "${NGINX_CONF_FILE}";
 
@@ -95,7 +95,7 @@ setupNginxConf() {
   
   if [ ! -f ${CF_DIR} ]; then
     mkdir -p ${CF_DIR};
-    cp "cloudflare.conf" "${CF_DIR}/cloudflare.conf";
+    cp "configs/cf-conf.template" "${CF_DIR}/cloudflare.conf";
   fi
   
   notify "New nginx config created at ${NGINX_CONF_FILE}";
@@ -130,7 +130,7 @@ processFpmPool() {
 }
 
 setupFpmPool() {
-  cp "php-pool.conf.template" "${FPM_POOL_FILE}";
+  cp "configs/fpm-pool.template" "${FPM_POOL_FILE}";
   sed -i -e "s/_domain/${DOMAIN}/g" "${FPM_POOL_FILE}";
   sed -i -e "s/_user/${NEW_USER}/g" "${FPM_POOL_FILE}";
 
