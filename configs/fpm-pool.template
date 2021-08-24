@@ -10,9 +10,10 @@ listen.mode = 0660
 
 pm = dynamic
 pm.max_children = 50
-pm.start_servers = 5
-pm.min_spare_servers = 5
-pm.max_spare_servers = 35
+pm.start_servers = 4
+pm.min_spare_servers = 2
+pm.max_spare_servers = 4
+pm.process_idle_timeout = 10s
 
 slowlog = /var/log/php-fpm/_domain-slow.log
 
