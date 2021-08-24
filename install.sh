@@ -191,7 +191,7 @@ setPermissions() {
 ## Checks
 ##############################################
 IS_SUCCESS=1;
-IS_OS_READY=0;
+IS_OS_READY=1;
 
 if [ "${EUID}" -ne 0 ]; then 
   alert "This script needs to be run as root";
