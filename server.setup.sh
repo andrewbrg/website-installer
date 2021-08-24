@@ -48,7 +48,7 @@ php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"
 php -r "if (hash_file('sha384', 'composer-setup.php') === '756890a4488ce9024fc62c56153228907f1545c228516cbf63f885e036d37e9a59d27d63f46af1d4d07ee0f76181c7d3') { echo 'Installer verified'; } else { echo 'Installer corrupt'; unlink('composer-setup.php'); } echo PHP_EOL;"
 php composer-setup.php
 php -r "unlink('composer-setup.php');"
-sudo mv composer.phar /usr/local/bin/composer;
+sudo mv composer.phar "/usr/local/bin/composer";
 
 apt install -y mysql-server;
 
@@ -62,12 +62,11 @@ mkdir -p "/etc/nginx/ssl/db.webagency";
 openssl req -x509 -nodes -days 9365 -newkey rsa:2048 -keyout "/etc/nginx/ssl/db.webagency/selfsigned.key" -out "/etc/nginx/ssl/db.webagency/selfsigned.crt";
 chown -R www-data "/etc/nginx/ssl/db.webagency";
 
-mkdir "${HOME}/installer";
-cd "${HOME}/installer";
-git clone "https://github.com/andrewbrg/website-installer.git" .;
-chmod +x install.sh
-
 apt autoremove --purge;
+
+selinux-activate;
+sed -i -e "s/SELINUX=disabled/SELINUX=enforcing/g" "/etc/selinux/config";
+sed -i -e "s/SELINUX=permissive/SELINUX=enforcing/g" "/etc/selinux/config";
 
 semanage permissive -a httpd_t;
 setsebool -P httpd_enable_homedirs 1;
