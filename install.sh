@@ -183,6 +183,11 @@ restartServices() {
   breakLine;
 }
 
+setPermissions() {
+  find "/home/${NEW_USER}/public_html" -type d -exec chmod 755 {} \;
+  find "/home/${NEW_USER}/public_html" -type f -exec chmod 644 {} \;
+}
+
 ## Checks
 ##############################################
 IS_SUCCESS=1;
@@ -223,6 +228,7 @@ FPM_POOL_FILE="/etc/php-fpm.d/${DOMAIN}.conf";
 processUser;
 processNginx;
 processFpmPool;
+setPermissions;
 restartServices;
 
 ## Summary
