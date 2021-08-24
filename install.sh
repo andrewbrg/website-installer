@@ -190,8 +190,10 @@ restartServices() {
 }
 
 setPermissions() {
-  find "/home/${USER_NEW}/public_html" -type d -exec chmod 755 {} \;
-  find "/home/${USER_NEW}/public_html" -type f -exec chmod 644 {} \;
+  local USER_PATH="/home/${USER_NEW}/public_html";
+  chown -R ${USER_NEW}:${USER_NEW} ${USER_PATH}
+  find "${USER_PATH}" -type d -exec chmod 755 {} \;
+  find "${USER_PATH}" -type f -exec chmod 644 {} \;
 }
 
 ## Checks
@@ -247,12 +249,6 @@ if [ ${IS_SUCCESS} -eq 1 ]; then
   echo -e "- Nginx config for \033[1;4m${DOMAIN}\033[0m and www.\033[1;4m${DOMAIN}\033[0m on HTTP/S created at \
   \033[1;4m${NGINX_CONF_FILE}\033[0m with SSL certificates located at \033[1;4m${SSL_CERT_DIR}\033[0m.";
   echo -e "- PHP-FPM pool running under user \033[1;4m${USER_NEW}\033[0m with config located at \033[1;4m${FPM_POOL_FILE}\033[0m.";
-  
-  notify "Please ensure the following SeLinux setup has been applied:";
-  echo 'semanage permissive -a httpd_t;';
-  echo 'setsebool -P httpd_enable_homedirs 1;';
-  echo 'setsebool -P httpd_can_network_connect 1;';
-  echo 'setsebool -P httpd_can_network_connect_db 1;';
 else
   echo "Installation failed..."
 fi
