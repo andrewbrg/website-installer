@@ -34,7 +34,7 @@ processUser() {
   if id "${NEW_USER}" &>/dev/null; then
     notify "User ${NEW_USER} already exists, skipping..."
   else
-    useradd -m -p"${2}" ${NEW_USER};
+    useradd -m -p"${NEW_USER_PW}" ${NEW_USER};
     usermod -a -G ${NEW_USER} ${NEW_USER};
     
     mkdir -p "/home/${NEW_USER}/public_html";
@@ -221,6 +221,7 @@ fi
 ##############################################
 DOMAIN=$1;
 NEW_USER=${DOMAIN//./};
+NEW_USER_PW=$2;
 SSL_CERT_DIR="/etc/nginx/ssl/${DOMAIN}";
 NGINX_CONF_FILE="/etc/nginx/conf.d/${DOMAIN}.conf";
 FPM_POOL_FILE="/etc/php-fpm.d/${DOMAIN}.conf";
