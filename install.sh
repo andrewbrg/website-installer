@@ -243,7 +243,7 @@ if [ ${IS_SUCCESS} -eq 1 ]; then
   echo -e "- PHP-FPM pool running under user \033[1;4m${NEW_USER}\033[0m with config located at \033[1;4m${FPM_POOL_FILE}\033[0m.";
   
   notify "Please ensure the following SeLinux setup has been applied:";
-  echo 'semanage enforce -a httpd_t;';
+  echo 'semanage permissive -a httpd_t;';
   echo 'setsebool -P httpd_enable_homedirs 1;';
   echo 'setsebool -P httpd_can_network_connect 1;';
   echo 'setsebool -P httpd_can_network_connect_db 1;';
