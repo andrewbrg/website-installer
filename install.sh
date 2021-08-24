@@ -151,68 +151,71 @@ setupFpmPool() {
 restartServices() {
   title "Restarting Services";
   
+  local NGINX_SERVICE="nginx";
   local PHP_SERVICE="php$(php -v | head -n 1 | cut -d " " -f 2 | cut -f1-2 -d".")-fpm";
   
   notify "Restarting PHP-FPM pool...";
   systemctl restart ${PHP_SERVICE};
+  
   if [ "$(service ${PHP_SERVICE} status | grep "(running)")" == '' ]; then
-    alert "PHP-FPM crashed - Removing added config file and restarting the service!";
+    alert "PHP-FPM crashed. Removing added config file and restarting the service.";
     rm -f "${FPM_POOL_FILE}";
     
     systemctl restart ${PHP_SERVICE};
     systemctl status ${PHP_SERVICE};
+    
+    IS_SUCCESS=0;
   fi
   breakLine;
   
   notify "Reloading nginx to apply configs...";
-  systemctl reload nginx;
+  systemctl reload ${NGINX_SERVICE};
+  
   if [ "$(systemctl status nginx | grep "(running)")" == '' ]; then
-    alert "Nginx crashed - Removing added config and restarting the service!";
+    alert "Nginx crashed. Removing added config and restarting the service.";
     rm -f "${NGINX_CONF_FILE}";
     
-    systemctl restart nginx;
-    systemctl status nginx;
+    systemctl restart ${NGINX_SERVICE};
+    systemctl status ${NGINX_SERVICE};
+    
+    IS_SUCCESS=0;
   fi
   breakLine;
 }
 
 ## Checks
 ##############################################
-CAN_PROCEED=1;
-DOMAIN=$1;
-NEW_USER=${DOMAIN//./};
-
-if [ $(which nginx) == '' ]; then
-  notify "Ngnix binary missing, please install nginx first...";
-  CAN_PROCEED=0;
-fi
-
-if [ $(which php) == '' ]; then
-  notify "PHP binary missing, please install PHP-FPM first...";
-  CAN_PROCEED=0;
-fi
-
-if [ ${CAN_PROCEED} -eq 0 ]; then
-  exit;
-fi
+IS_SUCCESS=1;
+IS_OS_READY=0;
 
 if [ "${EUID}" -ne 0 ]; then 
-  notify "Please do run this script as root.";
+  alert "This script needs to be run as root";
   exit;
 fi
 
-if [ "${1}" == '' ]; then
-  notify 'You must pass the full domain including TLD: e.g. ./install.sh mywebsite.com';
+if [ "${1}" == '' ] || [ "${2}" == '' ]; then
+  alert "You must pass the full domain and a password a new linux user E.g. ./install.sh 'domain.tld' 'userpassword';";
   exit;
 fi
 
-if [ "${2}" == '' ]; then
-  notify "You must pass a password for the new user ${NEW_USER}: e.g. ./install.sh mywebsite.com mypassword";
+if [ "$(which nginx)" == '' ]; then
+  alert "Ngnix missing, please install nginx first...";
+  IS_OS_READY=0;
+fi
+
+if [ "$(which php)" == '' ]; then
+  alert "PHP missing, please install PHP-FPM first...";
+  IS_OS_READY=0;
+fi
+
+if [ ${IS_OS_READY} -eq 0 ]; then
   exit;
 fi
 
 ## Installation
 ##############################################
+DOMAIN=$1;
+NEW_USER=${DOMAIN//./};
 SSL_CERT_DIR="/etc/nginx/ssl/${DOMAIN}";
 NGINX_CONF_FILE="/etc/nginx/conf.d/${DOMAIN}.conf";
 FPM_POOL_FILE="/etc/php-fpm.d/${DOMAIN}.conf";
@@ -226,14 +229,17 @@ restartServices;
 ##############################################
 
 notify "Installation summary:";
-echo -e "- New user \033[1;4m${NEW_USER}\033[0m available with a home directory at \033[1;4m/home/${NEW_USER}\033[0m.";
-echo -e "- Nginx config for \033[1;4m${DOMAIN}\033[0m and www.\033[1;4m${DOMAIN}\033[0m on HTTP/S created at \
-\033[1;4m${NGINX_CONF_FILE}\033[0m with SSL certificates located at \033[1;4m${SSL_CERT_DIR}\033[0m.";
-echo -e "- PHP-FPM pool running under user \033[1;4m${NEW_USER}\033[0m with config located at \033[1;4m${FPM_POOL_FILE}\033[0m.";
-
-notify "Please ensure the following SeLinux setup has been applied:";
-echo 'semanage enforce -a httpd_t;';
-echo 'setsebool -P httpd_enable_homedirs 1;';
-echo 'setsebool -P httpd_can_network_connect 1;';
-echo 'setsebool -P httpd_can_network_connect_db 1;';
-breakLine;
+if [ ${IS_SUCCESS} -eq 1 ]; then
+  echo -e "- New user \033[1;4m${NEW_USER}\033[0m available with a home directory at \033[1;4m/home/${NEW_USER}\033[0m.";
+  echo -e "- Nginx config for \033[1;4m${DOMAIN}\033[0m and www.\033[1;4m${DOMAIN}\033[0m on HTTP/S created at \
+  \033[1;4m${NGINX_CONF_FILE}\033[0m with SSL certificates located at \033[1;4m${SSL_CERT_DIR}\033[0m.";
+  echo -e "- PHP-FPM pool running under user \033[1;4m${NEW_USER}\033[0m with config located at \033[1;4m${FPM_POOL_FILE}\033[0m.";
+  
+  notify "Please ensure the following SeLinux setup has been applied:";
+  echo 'semanage enforce -a httpd_t;';
+  echo 'setsebool -P httpd_enable_homedirs 1;';
+  echo 'setsebool -P httpd_can_network_connect 1;';
+  echo 'setsebool -P httpd_can_network_connect_db 1;';
+else
+  echo "Installation failed..."
+fi
