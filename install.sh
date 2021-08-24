@@ -135,8 +135,9 @@ processFpmPool() {
 setupFpmPool() {
   cp "configs/fpm-pool.template" "${FPM_POOL_FILE}";
   sed -i -e "s/_domain/${DOMAIN}/g" "${FPM_POOL_FILE}";
-  sed -i -e "s/_user/${USER_NEW}/g" "${FPM_POOL_FILE}";
   sed -i -e "s/_version/${VERSION_PHP}/g" "${FPM_POOL_FILE}";
+  sed -i -e "s/_user/${USER_NEW}/g" "${FPM_POOL_FILE}";
+  sed -i -e "s/_group/${USER_NGINX}/g" "${FPM_POOL_FILE}";
 
   mkdir -p "/var/log/php${VERSION_PHP}-fpm";
   touch "/var/log/php${VERSION_PHP}-fpm/${DOMAIN}-slow.log";
